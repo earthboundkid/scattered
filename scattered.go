@@ -2,6 +2,7 @@ package scattered
 
 import (
 	"crypto/md5"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -19,6 +20,9 @@ func HashReader(r io.Reader) (string, error) {
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
+// ErrIsDir is returned by HashPath when attempting to hash a directory
+var ErrIsDir = errors.New("Tried to hash the path of a directory")
+
 // HashPath opens the file at the provided filepath and returns a
 // string containing the file's hash as part of its filename
 func HashPath(path string) (string, error) {
@@ -27,6 +31,12 @@ func HashPath(path string) (string, error) {
 		return "", err
 	}
 	defer f.Close()
+
+	if stat, err := f.Stat(); err != nil {
+		return "", err
+	} else if stat.IsDir() {
+		return "", ErrIsDir
+	}
 
 	hash, err := HashReader(f)
 	if err != nil {

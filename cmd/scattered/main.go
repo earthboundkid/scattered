@@ -87,6 +87,9 @@ Options:
 
 	for _, src := range paths {
 		dst, err := scattered.HashPath(src)
+		if err == scattered.ErrIsDir {
+			continue
+		}
 		if err != nil {
 			return err
 		}
