@@ -92,15 +92,16 @@ func getPaths(recpat string, globs ...string) (paths []string, err error) {
 		if err != nil {
 			return err
 		}
-		if info.IsDir() {
-			return nil
-		}
 
 		finaldir := filepath.Base(filepath.Dir(path))
 		if matched, err := filepath.Match(recpat, finaldir); err != nil {
 			return err
 		} else if !matched && finaldir != "." {
 			return filepath.SkipDir
+		}
+
+		if info.IsDir() {
+			return nil
 		}
 
 		for _, glob := range globs {
