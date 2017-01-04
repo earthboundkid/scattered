@@ -53,32 +53,41 @@ func getPaths(globs []string) (paths []string, err error) {
 	return paths, err
 }
 
-func die(err error) {
-	if err != nil {
+func main() {
+	if err := run(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
 }
 
-func main() {
+func run() error {
 	flag.Parse()
 	paths, err := getPaths(flag.Args())
-	die(err)
+	if err != nil {
+		return err
+	}
 
 	var pathsMap = map[string]string{}
 
 	for _, src := range paths {
 		dst, err := scattered.HashPath(src)
-		die(err)
+		if err != nil {
+			return err
+		}
 		pathsMap[src] = dst
 	}
 
-	die(link(pathsMap))
+	if err = link(pathsMap); err != nil {
+		return err
+	}
 
 	b, err := json.MarshalIndent(&pathsMap, "", "\t")
-	die(err)
+	if err != nil {
+		return err
+	}
 
 	os.Stdout.Write(b)
 	// Trailing newline
-	os.Stdout.WriteString("\n")
+	_, err = os.Stdout.WriteString("\n")
+	return err
 }
