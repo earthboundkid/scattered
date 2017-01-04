@@ -8,12 +8,9 @@ Scattered is a command line tool for asset hashing. (It would be called [“scat
 $ cat hello.txt
 world
 $ scattered *.txt
-[
-        {
-                "input": "hello.txt",
-                "output": "hello.591785b794601e212b260e25925636fd.txt"
-        }
-]
+{
+        "hello.txt": "hello.591785b794601e212b260e25925636fd.txt"
+}
 $ ls -1
 hello.591785b794601e212b260e25925636fd.txt
 hello.txt
