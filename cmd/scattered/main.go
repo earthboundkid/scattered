@@ -62,6 +62,21 @@ func main() {
 
 func run() error {
 	dryrun := flag.Bool("dryrun", false, "Just create the JSON manifest; don't link files")
+	flag.Usage = func() {
+		fmt.Fprint(os.Stderr, `Usage of scattered:
+
+	scattered [options] <globs>...
+
+Given a shell path or glob, for each file it makes an MD5 hash and
+hard-links basename.HASH.ext to the file. Finally, it returns a JSON
+object mapping input to output paths for use as a file manifest by
+some other tool.
+
+Options:
+
+`)
+		flag.PrintDefaults()
+	}
 	flag.Parse()
 	paths, err := getPaths(flag.Args())
 	if err != nil {
