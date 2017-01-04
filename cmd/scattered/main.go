@@ -29,26 +29,31 @@ func link(paths map[string]string) (err error) {
 	return nil
 }
 
-func getPaths(globs []string) (paths []string, err error) {
-	var fileset = map[string]bool{}
-
-	for _, glob := range globs {
-		globpaths, err := filepath.Glob(glob)
+func getPaths(recpat string, globs []string) (paths []string, err error) {
+	err = filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			return nil, err
+			return err
+		}
+		if info.IsDir() {
+			return nil
 		}
 
-		for _, path := range globpaths {
-			if seen := fileset[path]; seen {
-				continue
-			}
+		finaldir := filepath.Base(filepath.Dir(path))
+		if matched, err := filepath.Match(recpat, finaldir); err != nil {
+			return err
+		} else if !matched && finaldir != "." {
+			return filepath.SkipDir
+		}
 
-			fileset[path] = true
-			if !scattered.IsHashedPath(path) {
+		for _, glob := range globs {
+			if matched, err := filepath.Match(glob, filepath.Base(path)); err != nil {
+				return err
+			} else if matched && !scattered.IsHashedPath(path) {
 				paths = append(paths, path)
 			}
 		}
-	}
+		return nil
+	})
 
 	return paths, err
 }
@@ -62,6 +67,7 @@ func main() {
 
 func run() error {
 	dryrun := flag.Bool("dryrun", false, "Just create the JSON manifest; don't link files")
+	recurse := flag.String("recurse", "[^.]*", "Glob for directories to recurse into")
 	flag.Usage = func() {
 		fmt.Fprint(os.Stderr, `Usage of scattered:
 
@@ -78,7 +84,7 @@ Options:
 		flag.PrintDefaults()
 	}
 	flag.Parse()
-	paths, err := getPaths(flag.Args())
+	paths, err := getPaths(*recurse, flag.Args())
 	if err != nil {
 		return err
 	}
