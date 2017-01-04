@@ -61,3 +61,57 @@ func splitName(path string) (basename, ext string) {
 	basename = path[:len(path)-len(ext)]
 	return
 }
+
+// HashFileGlobs returns a map from filepaths to their HashPath equivalent for
+// all files whoses parents match the dirpat glob and themselves match one
+// of the filepat globs.
+func HashFileGlobs(dirpat string, filepats ...string) (map[string]string, error) {
+	paths, err := getPaths(dirpat, filepats...)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathsMap = map[string]string{}
+
+	for _, src := range paths {
+		dst, err := HashPath(src)
+		if err == ErrIsDir {
+			continue
+		}
+		if err != nil {
+			return nil, err
+		}
+		pathsMap[src] = dst
+	}
+
+	return pathsMap, nil
+}
+
+func getPaths(recpat string, globs ...string) (paths []string, err error) {
+	err = filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+
+		finaldir := filepath.Base(filepath.Dir(path))
+		if matched, err := filepath.Match(recpat, finaldir); err != nil {
+			return err
+		} else if !matched && finaldir != "." {
+			return filepath.SkipDir
+		}
+
+		for _, glob := range globs {
+			if matched, err := filepath.Match(glob, filepath.Base(path)); err != nil {
+				return err
+			} else if matched && !IsHashedPath(path) {
+				paths = append(paths, path)
+			}
+		}
+		return nil
+	})
+
+	return paths, err
+}

@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/carlmjohnson/scattered"
 )
@@ -27,35 +26,6 @@ func link(paths map[string]string) (err error) {
 	}
 
 	return nil
-}
-
-func getPaths(recpat string, globs []string) (paths []string, err error) {
-	err = filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.IsDir() {
-			return nil
-		}
-
-		finaldir := filepath.Base(filepath.Dir(path))
-		if matched, err := filepath.Match(recpat, finaldir); err != nil {
-			return err
-		} else if !matched && finaldir != "." {
-			return filepath.SkipDir
-		}
-
-		for _, glob := range globs {
-			if matched, err := filepath.Match(glob, filepath.Base(path)); err != nil {
-				return err
-			} else if matched && !scattered.IsHashedPath(path) {
-				paths = append(paths, path)
-			}
-		}
-		return nil
-	})
-
-	return paths, err
 }
 
 func main() {
@@ -84,22 +54,9 @@ Options:
 		flag.PrintDefaults()
 	}
 	flag.Parse()
-	paths, err := getPaths(*recurse, flag.Args())
+	pathsMap, err := scattered.HashFileGlobs(*recurse, flag.Args()...)
 	if err != nil {
 		return err
-	}
-
-	var pathsMap = map[string]string{}
-
-	for _, src := range paths {
-		dst, err := scattered.HashPath(src)
-		if err == scattered.ErrIsDir {
-			continue
-		}
-		if err != nil {
-			return err
-		}
-		pathsMap[src] = dst
 	}
 
 	if !*dryrun {
