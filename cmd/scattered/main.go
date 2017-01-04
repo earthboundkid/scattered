@@ -61,6 +61,7 @@ func main() {
 }
 
 func run() error {
+	dryrun := flag.Bool("dryrun", false, "Just create the JSON manifest; don't link files")
 	flag.Parse()
 	paths, err := getPaths(flag.Args())
 	if err != nil {
@@ -77,8 +78,10 @@ func run() error {
 		pathsMap[src] = dst
 	}
 
-	if err = link(pathsMap); err != nil {
-		return err
+	if !*dryrun {
+		if err = link(pathsMap); err != nil {
+			return err
+		}
 	}
 
 	b, err := json.MarshalIndent(&pathsMap, "", "\t")
