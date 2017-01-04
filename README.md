@@ -19,13 +19,32 @@ Options:
 
   -dryrun
         Just create the JSON manifest; don't link files
+  -recurse string
+        Glob for directories to recurse into (default "[^.]*")
+$ tree
+.
+|-- css
+|   `-- site.css
+|-- hello.txt
+|-- img
+|   `-- example.png
+`-- js
+    `-- menus.js
+
+3 directories, 4 files
 $ cat hello.txt
 world
 $ scattered *.txt
 {
         "hello.txt": "hello.591785b794601e212b260e25925636fd.txt"
 }
-$ ls -1
+$ ls -1 hello*
 hello.591785b794601e212b260e25925636fd.txt
 hello.txt
+$ scattered '*.css' '*.js' '*.png'
+{
+        "css/site.css": "css/site.d41d8cd98f00b204e9800998ecf8427e.css",
+        "img/example.png": "img/example.d41d8cd98f00b204e9800998ecf8427e.png",
+        "js/menus.js": "js/menus.d41d8cd98f00b204e9800998ecf8427e.js"
+}
 ```
