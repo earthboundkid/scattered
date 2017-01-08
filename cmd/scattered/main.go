@@ -6,32 +6,9 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 
 	"github.com/carlmjohnson/scattered"
 )
-
-func link(basepath string, paths map[string]string) (err error) {
-	for src, dst := range paths {
-		src = filepath.Join(basepath, src)
-		dst = filepath.Join(basepath, dst)
-
-		_, err := os.Stat(dst)
-		if !os.IsNotExist(err) {
-			return err
-		} else if err == nil {
-			if err = os.Remove(dst); err != nil {
-				return err
-			}
-		}
-
-		if err = os.Link(src, dst); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
 
 func main() {
 	if err := run(); err != nil {
@@ -67,7 +44,7 @@ Options:
 	}
 
 	if !*dryrun {
-		if err = link(*basepath, pathsMap); err != nil {
+		if err = scattered.Link(*basepath, pathsMap); err != nil {
 			return err
 		}
 	}

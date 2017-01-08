@@ -127,3 +127,26 @@ func getPaths(basepath, recpat string, globs ...string) (paths []string, err err
 
 	return paths, err
 }
+
+// Link creates hardlinks for the mapped resources.
+func Link(basepath string, paths map[string]string) (err error) {
+	for src, dst := range paths {
+		src = filepath.Join(basepath, src)
+		dst = filepath.Join(basepath, dst)
+
+		_, err := os.Stat(dst)
+		if !os.IsNotExist(err) {
+			return err
+		} else if err == nil {
+			if err = os.Remove(dst); err != nil {
+				return err
+			}
+		}
+
+		if err = os.Link(src, dst); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
