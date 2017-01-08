@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 )
 
 // HashReader reads the provided io.Reader and returns its MD5 hash as a string or an error.
@@ -63,10 +64,10 @@ func splitName(path string) (basename, ext string) {
 }
 
 // HashFileGlobs returns a map from filepaths to their HashPath equivalent for
-// all files whoses parents match the dirpat glob and themselves match one
+// all files whoses parents match the dirpat regex and themselves match one
 // of the filepat globs.
-func HashFileGlobs(dirpat string, filepats ...string) (map[string]string, error) {
-	paths, err := getPaths(dirpat, filepats...)
+func HashFileGlobs(basepath, dirpat string, filepats ...string) (map[string]string, error) {
+	paths, err := getPaths(basepath, dirpat, filepats...)
 	if err != nil {
 		return nil, err
 	}
@@ -81,22 +82,32 @@ func HashFileGlobs(dirpat string, filepats ...string) (map[string]string, error)
 		if err != nil {
 			return nil, err
 		}
+		src, _ = filepath.Rel(basepath, src)
+		dst, _ = filepath.Rel(basepath, dst)
 		pathsMap[src] = dst
 	}
 
 	return pathsMap, nil
 }
 
-func getPaths(recpat string, globs ...string) (paths []string, err error) {
-	err = filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
+func getPaths(basepath, recpat string, globs ...string) (paths []string, err error) {
+	regex, err := regexp.Compile(recpat)
+	if err != nil {
+		return nil, err
+	}
+
+	err = filepath.Walk(basepath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
-		finaldir := filepath.Base(filepath.Dir(path))
-		if matched, err := filepath.Match(recpat, finaldir); err != nil {
+		finaldir, err := filepath.Rel(basepath, path)
+		finaldir = filepath.Base(filepath.Dir(finaldir))
+		if err != nil {
 			return err
-		} else if !matched && finaldir != "." {
+		}
+
+		if !regex.MatchString(finaldir) && finaldir != "." {
 			return filepath.SkipDir
 		}
 

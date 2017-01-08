@@ -4,13 +4,18 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/carlmjohnson/scattered"
 )
 
-func link(paths map[string]string) (err error) {
+func link(basepath string, paths map[string]string) (err error) {
 	for src, dst := range paths {
+		src = filepath.Join(basepath, src)
+		dst = filepath.Join(basepath, dst)
+
 		_, err := os.Stat(dst)
 		if !os.IsNotExist(err) {
 			return err
@@ -37,7 +42,9 @@ func main() {
 
 func run() error {
 	dryrun := flag.Bool("dryrun", false, "Just create the JSON manifest; don't link files")
-	recurse := flag.String("recurse", "[^.]*", "Glob for directories to recurse into")
+	basepath := flag.String("basepath", ".", "Base directory to process from")
+	dirpat := flag.String("dirpat", "^[^.].*", "Regex for directories to process files in")
+	output := flag.String("output", "", "File to save manifest (stdout if unset)")
 	flag.Usage = func() {
 		fmt.Fprint(os.Stderr, `Usage of scattered:
 
@@ -54,13 +61,13 @@ Options:
 		flag.PrintDefaults()
 	}
 	flag.Parse()
-	pathsMap, err := scattered.HashFileGlobs(*recurse, flag.Args()...)
+	pathsMap, err := scattered.HashFileGlobs(*basepath, *dirpat, flag.Args()...)
 	if err != nil {
 		return err
 	}
 
 	if !*dryrun {
-		if err = link(pathsMap); err != nil {
+		if err = link(*basepath, pathsMap); err != nil {
 			return err
 		}
 	}
@@ -70,8 +77,21 @@ Options:
 		return err
 	}
 
-	os.Stdout.Write(b)
+	var fout io.Writer = os.Stdout
+	if *output != "" {
+		f, err := os.Create(*output)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		fout = f
+	}
+
+	if _, err = fout.Write(b); err != nil {
+		return err
+	}
+
 	// Trailing newline
-	_, err = os.Stdout.WriteString("\n")
+	_, err = io.WriteString(fout, "\n")
 	return err
 }

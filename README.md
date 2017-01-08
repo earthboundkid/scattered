@@ -17,10 +17,14 @@ some other tool.
 
 Options:
 
+  -basepath string
+        Base directory to process from (default ".")
+  -dirpat string
+        Regex for directories to process files in (default "^[^.].*")
   -dryrun
         Just create the JSON manifest; don't link files
-  -recurse string
-        Glob for directories to recurse into (default "[^.]*")
+  -output string
+        File to save manifest (stdout if unset)
 $ tree
 .
 |-- css
