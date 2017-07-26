@@ -1,5 +1,5 @@
 # Scattered [![GoDoc](https://godoc.org/github.com/carlmjohnson/scattered?status.svg)](https://godoc.org/github.com/carlmjohnson/scattered)
-Scattered is a command line tool for asset hashing. (It would be called [“scattered, covered, and smothered,”][waho] but that name is too long.) It is useful as a stand-alone tool for hashing web assets. Given a shell path or glob, for each file it makes an MD5 hash and hard-links basename.HASH.ext to the file. Finally, it returns a JSON object mapping input to output paths for use as a file manifest by some other tool.
+Scattered is a command line tool for asset hashing. (It would be called [“scattered, covered, and smothered,”][waho] but that name is too long.) It is useful as a stand-alone tool for hashing web assets. Given a shell path or glob, for each file it makes an MD5 hash and copies the file to basename.HASH.ext. Finally, it returns a JSON object mapping input to output paths for use as a file manifest by some other tool.
 
 [waho]: https://en.wikipedia.org/wiki/Waffle_House
 
@@ -11,7 +11,7 @@ Usage of scattered:
         scattered [options] <globs>...
 
 Given a shell path or glob, for each file it makes an MD5 hash and
-hard-links basename.HASH.ext to the file. Finally, it returns a JSON
+copies the file to basename.HASH.ext. Finally, it returns a JSON
 object mapping input to output paths for use as a file manifest by
 some other tool.
 
@@ -22,7 +22,9 @@ Options:
   -dirpat string
         Regex for directories to process files in (default "^[^.].*")
   -dryrun
-        Just create the JSON manifest; don't link files
+        Just create the JSON manifest; don't create files
+  -link
+        Use hardlinks instead of copying files
   -output string
         File to save manifest (stdout if unset)
 $ tree

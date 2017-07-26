@@ -150,3 +150,31 @@ func Link(basepath string, paths map[string]string) (err error) {
 
 	return nil
 }
+
+// Copy creates copies of the mapped resources.
+func Copy(basepath string, paths map[string]string) (err error) {
+	for src, dst := range paths {
+		src = filepath.Join(basepath, src)
+		dst = filepath.Join(basepath, dst)
+		if err := copy(src, dst); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func copy(src, dst string) error {
+	fsrc, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+
+	fdst, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+
+	_, err = io.Copy(fdst, fsrc)
+	return err
+}

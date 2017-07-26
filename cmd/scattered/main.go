@@ -13,22 +13,24 @@ import (
 func main() {
 	if err := run(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		os.Exit(1)
+		os.Exit(2)
 	}
 }
 
 func run() error {
-	dryrun := flag.Bool("dryrun", false, "Just create the JSON manifest; don't link files")
+	dryrun := flag.Bool("dryrun", false, "Just create the JSON manifest; don't create files")
 	basepath := flag.String("basepath", ".", "Base directory to process from")
 	dirpat := flag.String("dirpat", "^[^.].*", "Regex for directories to process files in")
 	output := flag.String("output", "", "File to save manifest (stdout if unset)")
+	link := flag.Bool("link", false, "Use hardlinks instead of copying files")
+
 	flag.Usage = func() {
 		fmt.Fprint(os.Stderr, `Usage of scattered:
 
 	scattered [options] <globs>...
 
 Given a shell path or glob, for each file it makes an MD5 hash and
-hard-links basename.HASH.ext to the file. Finally, it returns a JSON
+copies the file to basename.HASH.ext. Finally, it returns a JSON
 object mapping input to output paths for use as a file manifest by
 some other tool.
 
@@ -44,7 +46,12 @@ Options:
 	}
 
 	if !*dryrun {
-		if err = scattered.Link(*basepath, pathsMap); err != nil {
+		fileaction := scattered.Copy
+		if *link {
+			fileaction = scattered.Link
+		}
+
+		if err = fileaction(*basepath, pathsMap); err != nil {
 			return err
 		}
 	}
