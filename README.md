@@ -3,7 +3,7 @@ Scattered is a command line tool for asset hashing. (It would be called [“scat
 
 [waho]: https://en.wikipedia.org/wiki/Waffle_House
 
-##Screenshots
+## Screenshots
 ```bash
 $ scattered -h
 Usage of scattered:
