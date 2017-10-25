@@ -25,6 +25,8 @@ Options:
         Just create the JSON manifest; don't create files
   -link
         Use hardlinks instead of copying files
+  -merge-existing
+        Attempt to merge new manifest results into an existing file
   -output string
         File to save manifest (stdout if unset)
 $ tree

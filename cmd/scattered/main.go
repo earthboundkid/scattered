@@ -22,6 +22,7 @@ func run() error {
 	basepath := flag.String("basepath", ".", "Base directory to process from")
 	dirpat := flag.String("dirpat", "^[^.].*", "Regex for directories to process files in")
 	output := flag.String("output", "", "File to save manifest (stdout if unset)")
+	merge := flag.Bool("merge-existing", false, "Attempt to merge new manifest results into an existing file")
 	link := flag.Bool("link", false, "Use hardlinks instead of copying files")
 
 	flag.Usage = func() {
@@ -56,6 +57,14 @@ Options:
 		}
 	}
 
+	// Attempt to merge. Warn on error.
+	if *merge && *output != "" {
+		if err = attemptMerge(*output, pathsMap); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: error during file merge: %v\n", err)
+			err = nil
+		}
+	}
+
 	b, err := json.MarshalIndent(&pathsMap, "", "\t")
 	if err != nil {
 		return err
@@ -78,4 +87,30 @@ Options:
 	// Trailing newline
 	_, err = io.WriteString(fout, "\n")
 	return err
+}
+
+func attemptMerge(path string, pathsMap map[string]string) error {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return nil
+	}
+
+	f, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	var oldPaths map[string]string
+	dec := json.NewDecoder(f)
+	if err = dec.Decode(&oldPaths); err != nil {
+		return err
+	}
+
+	for key, val := range oldPaths {
+		if _, ok := pathsMap[key]; !ok {
+			pathsMap[key] = val
+		}
+	}
+
+	return nil
 }
