@@ -19,7 +19,8 @@ func main() {
 
 func run() error {
 	dryrun := flag.Bool("dryrun", false, "Just create the JSON manifest; don't create files")
-	basepath := flag.String("basepath", ".", "Base directory to process from")
+	srcbasepath := flag.String("srcbasepath", ".", "Base directory to process from")
+	dstbasepath := flag.String("dstbasepath", "", "Base directory to put hashed files in (default srcbasepath)")
 	dirpat := flag.String("dirpat", "^[^.].*", "Regex for directories to process files in")
 	output := flag.String("output", "", "File to save manifest (stdout if unset)")
 	merge := flag.Bool("merge-existing", false, "Attempt to merge new manifest results into an existing file")
@@ -41,7 +42,12 @@ Options:
 		flag.PrintDefaults()
 	}
 	flag.Parse()
-	pathsMap, err := scattered.HashFileGlobs(*basepath, *dirpat, flag.Args()...)
+
+	if *dstbasepath == "" {
+		dstbasepath = srcbasepath
+	}
+
+	pathsMap, err := scattered.HashFileGlobs(*srcbasepath, *dirpat, flag.Args()...)
 	if err != nil {
 		return err
 	}
@@ -52,7 +58,7 @@ Options:
 			fileaction = scattered.Link
 		}
 
-		if err = fileaction(*basepath, pathsMap); err != nil {
+		if err = fileaction(*srcbasepath, *dstbasepath, pathsMap); err != nil {
 			return err
 		}
 	}

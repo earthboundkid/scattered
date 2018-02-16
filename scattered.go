@@ -129,12 +129,16 @@ func getPaths(basepath, recpat string, globs ...string) (paths []string, err err
 }
 
 // Link creates hardlinks for the mapped resources.
-func Link(basepath string, paths map[string]string) (err error) {
+func Link(srcBase, destBase string, paths map[string]string) (err error) {
 	for src, dst := range paths {
-		src = filepath.Join(basepath, src)
-		dst = filepath.Join(basepath, dst)
+		src = filepath.Join(srcBase, src)
+		dst = filepath.Join(destBase, dst)
+
+		// Make containing directory if it doesn't already exist
+		_ = os.MkdirAll(filepath.Dir(dst), 0777)
 
 		_, err := os.Stat(dst)
+
 		if !os.IsNotExist(err) {
 			return err
 		} else if err == nil {
@@ -152,10 +156,14 @@ func Link(basepath string, paths map[string]string) (err error) {
 }
 
 // Copy creates copies of the mapped resources.
-func Copy(basepath string, paths map[string]string) (err error) {
+func Copy(srcBase, dstBase string, paths map[string]string) (err error) {
 	for src, dst := range paths {
-		src = filepath.Join(basepath, src)
-		dst = filepath.Join(basepath, dst)
+		src = filepath.Join(srcBase, src)
+		dst = filepath.Join(dstBase, dst)
+
+		// Make containing directory if it doesn't already exist
+		_ = os.MkdirAll(filepath.Dir(dst), 0777)
+
 		if err := copy(src, dst); err != nil {
 			return err
 		}
